@@ -1,51 +1,69 @@
 <!doctype html>
 <html lang="es">
-
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Explorador UXXI · web</title>
-    <link rel="stylesheet" href="./style.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Explorador UXXI · web</title>
+  <link rel="stylesheet" href="./style.css" />
 </head>
 
 <body>
-    <header>
-        <h1>Explorador UXXI · web</h1>
-        <div class="row">
-            <input id="apiBase" placeholder="API base (ej: https://tu-backend.onrender.com)" />
-            <button id="btnConnect">Conectar</button>
-        </div>
-        <p id="status" class="muted"></p>
-    </header>
+  <header>
+    <h1>Explorador UXXI · web</h1>
 
-    <main class="grid">
-        <section class="card">
-            <h2>Owners</h2>
-            <select id="owners"></select>
-            <button id="btnLoadTables">Cargar tablas</button>
-            <p id="errOwners" class="error"></p>
-        </section>
+    <div class="row" style="margin-bottom:10px;">
+      <input
+        id="apiBase"
+        placeholder="URL del backend (ej: https://exploradoruxxi2-0.onrender.com)"
+        value="https://exploradoruxxi2-0.onrender.com"
+        style="flex:1;"
+      />
+      <button id="btnConnect">Conectar</button>
+    </div>
 
-        <section class="card">
-            <h2>Tablas</h2>
-            <input id="tableFilter" placeholder="Buscar tabla..." />
-            <select id="tables" size="12"></select>
-            <div class="row">
-                <button id="btnColumns">Columnas</button>
-                <button id="btnDDL">DDL</button>
-                <button id="btnPreview">Datos</button>
-            </div>
-            <p id="errTables" class="error"></p>
-        </section>
+    <p class="muted" style="margin:0 0 8px;">
+      Tip: este campo es la <b>URL de la API</b> (no un owner). Ej: <code>https://exploradoruxxi2-0.onrender.com</code>
+    </p>
 
-        <section class="card">
-            <h2>Resultado</h2>
-            <pre id="output"></pre>
-            <p id="errOutput" class="error"></p>
-        </section>
-    </main>
+    <p id="status" class="muted" style="margin:0;"></p>
+  </header>
 
-    <script src="./app.js"></script>
+  <main class="grid">
+    <section class="card">
+      <h2>Owners</h2>
+
+      <select id="owners" size="10" style="width:100%;"></select>
+
+      <div class="row" style="margin-top:10px;">
+        <button id="btnLoadTables">Cargar tablas</button>
+      </div>
+
+      <p id="errOwners" class="error"></p>
+    </section>
+
+    <section class="card">
+      <h2>Tablas</h2>
+
+      <input id="tableFilter" placeholder="Buscar tabla..." style="width:100%; margin-bottom:10px;" />
+
+      <select id="tables" size="12" style="width:100%;"></select>
+
+      <div class="row" style="margin-top:10px;">
+        <button id="btnColumns">Columnas</button>
+        <button id="btnDDL">DDL</button>
+        <button id="btnPreview">Datos</button>
+      </div>
+
+      <p id="errTables" class="error"></p>
+    </section>
+
+    <section class="card">
+      <h2>Resultado</h2>
+      <pre id="output"></pre>
+      <p id="errOutput" class="error"></p>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
 </body>
-
 </html>
