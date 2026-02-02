@@ -59,4 +59,14 @@ def q_preview(owner: str, table: str, limit: int = 50) -> str:
     WHERE ROWNUM <= {limit}
     """
 
+def q_view_text(owner: str, view: str) -> str:
+    return f"""
+    SELECT TEXT AS ddl
+    FROM ALL_VIEWS
+    WHERE OWNER = '{owner.upper()}'
+      AND VIEW_NAME = '{view.upper()}'
+    """
+
+
+
 
