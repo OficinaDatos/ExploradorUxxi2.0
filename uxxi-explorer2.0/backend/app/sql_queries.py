@@ -1,5 +1,6 @@
 def q_owners() -> str:
-    # Incluye owners que tengan TABLAS o VISTAS (UXXIAC suele aparecer por ALL_VIEWS).
+    # Incluye owners que tengan TABLAS o VISTAS.
+    # En UXXI cloud suele haber owners que solo aparecen en ALL_VIEWS (ej: UXXIAC).
     return """
     SELECT owner FROM (
         SELECT DISTINCT owner FROM all_tables
@@ -9,8 +10,9 @@ def q_owners() -> str:
     ORDER BY owner
     """
 
+
 def q_tables(owner: str) -> str:
-    # Devuelve una lista simple de nombres (tablas + vistas), para no romper el frontend.
+    # Devuelve una lista simple de nombres (tablas + vistas) para no romper el frontend.
     o = owner.upper()
     return f"""
     SELECT name FROM (
@@ -25,6 +27,7 @@ def q_tables(owner: str) -> str:
     ORDER BY name
     """
 
+
 def q_columns(owner: str, table: str) -> str:
     # Funciona tanto para tablas como para vistas.
     return f"""
@@ -35,9 +38,10 @@ def q_columns(owner: str, table: str) -> str:
     ORDER BY column_id
     """
 
+
 def q_ddl(owner: str, table: str) -> str:
-    # Intenta devolver DDL de TABLE y, si no existe/permisos, de VIEW.
-    # Si DBMS_METADATA está bloqueado, puede fallar igual (se maneja en tu endpoint).
+    # Intenta devolver DDL de TABLE y, si no existe, de VIEW.
+    # Si DBMS_METADATA está bloqueado, fallará y main.py hará fallback a ALL_VIEWS.TEXT.
     o = owner.upper()
     t = table.upper()
     return f"""
@@ -50,16 +54,9 @@ def q_ddl(owner: str, table: str) -> str:
     FETCH FIRST 1 ROWS ONLY
     """
 
-def q_preview(owner: str, table: str, limit: int = 50) -> str:
-    # Más compatible que FETCH FIRST (algunos entornos lo bloquean o fallan con vistas).
-    limit = max(1, min(int(limit), 200))
-    return f"""
-    SELECT *
-    FROM {owner.upper()}.{table.upper()}
-    WHERE ROWNUM <= {limit}
-    """
 
 def q_view_text(owner: str, view: str) -> str:
+    # Fallback seguro para vistas: devuelve el texto/definición desde ALL_VIEWS
     return f"""
     SELECT TEXT AS ddl
     FROM ALL_VIEWS
@@ -67,6 +64,15 @@ def q_view_text(owner: str, view: str) -> str:
       AND VIEW_NAME = '{view.upper()}'
     """
 
+
+def q_preview(owner: str, table: str, limit: int = 50) -> str:
+    # Más compatible que FETCH FIRST (algunos entornos fallan o no lo permiten).
+    limit = max(1, min(int(limit), 200))
+    return f"""
+    SELECT *
+    FROM {owner.upper()}.{table.upper()}
+    WHERE ROWNUM <= {limit}
+    """
 
 
 
