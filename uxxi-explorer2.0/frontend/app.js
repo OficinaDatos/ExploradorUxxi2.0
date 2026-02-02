@@ -21,12 +21,17 @@ async function loadOwners() {
         const data = await apiGet(`/meta/owners`);
         const sel = $("owners");
         sel.innerHTML = "";
-        (data.owners || []).forEach(o => {
+
+        // ✅ El backend devuelve "propietarios"
+        const owners = data.propietarios || [];
+
+        owners.forEach(o => {
             const opt = document.createElement("option");
             opt.value = o; opt.textContent = o;
             sel.appendChild(opt);
         });
-        setStatus(`Owners cargados: ${data.owners.length}`);
+
+        setStatus(`Owners cargados: ${owners.length}`);
     } catch (e) {
         $("errOwners").textContent = e.message;
     }
@@ -111,3 +116,4 @@ $("btnColumns").onclick = loadColumns;
 $("btnDDL").onclick = loadDDL;
 $("btnPreview").onclick = loadPreview;
 $("tableFilter").oninput = applyTableFilter;
+
