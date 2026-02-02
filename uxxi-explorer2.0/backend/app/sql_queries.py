@@ -1,21 +1,32 @@
 def q_owners() -> str:
-    # En Oracle suele haber ALL_TABLES/ALL_TAB_COLUMNS.
-    # Algunos entornos restringen ALL_*. Si esto falla, hay que ajustar a lo permitido.
+    # Incluye owners que tengan TABLAS o VISTAS (UXXIAC suele aparecer por ALL_VIEWS).
     return """
-    SELECT DISTINCT owner
-    FROM all_tables
+    SELECT owner FROM (
+        SELECT DISTINCT owner FROM all_tables
+        UNION
+        SELECT DISTINCT owner FROM all_views
+    )
     ORDER BY owner
     """
 
 def q_tables(owner: str) -> str:
+    # Devuelve una lista simple de nombres (tablas + vistas), para no romper el frontend.
+    o = owner.upper()
     return f"""
-    SELECT table_name
-    FROM all_tables
-    WHERE owner = '{owner.upper()}'
-    ORDER BY table_name
+    SELECT name FROM (
+        SELECT table_name AS name
+        FROM all_tables
+        WHERE owner = '{o}'
+        UNION
+        SELECT view_name AS name
+        FROM all_views
+        WHERE owner = '{o}'
+    )
+    ORDER BY name
     """
 
 def q_columns(owner: str, table: str) -> str:
+    # Funciona tanto para tablas como para vistas.
     return f"""
     SELECT column_name, data_type, data_length, nullable
     FROM all_tab_columns
@@ -25,16 +36,27 @@ def q_columns(owner: str, table: str) -> str:
     """
 
 def q_ddl(owner: str, table: str) -> str:
-    # DBMS_METADATA puede estar bloqueado. Si lo está, esto va a fallar y devolvemos error claro.
+    # Intenta devolver DDL de TABLE y, si no existe/permisos, de VIEW.
+    # Si DBMS_METADATA está bloqueado, puede fallar igual (se maneja en tu endpoint).
+    o = owner.upper()
+    t = table.upper()
     return f"""
-    SELECT DBMS_METADATA.GET_DDL('TABLE','{table.upper()}','{owner.upper()}') AS ddl
-    FROM DUAL
+    SELECT ddl FROM (
+        SELECT DBMS_METADATA.GET_DDL('TABLE','{t}','{o}') AS ddl FROM dual
+        UNION ALL
+        SELECT DBMS_METADATA.GET_DDL('VIEW','{t}','{o}')  AS ddl FROM dual
+    )
+    WHERE ddl IS NOT NULL
+    FETCH FIRST 1 ROWS ONLY
     """
 
 def q_preview(owner: str, table: str, limit: int = 50) -> str:
+    # Más compatible que FETCH FIRST (algunos entornos lo bloquean o fallan con vistas).
     limit = max(1, min(int(limit), 200))
     return f"""
     SELECT *
     FROM {owner.upper()}.{table.upper()}
-    FETCH FIRST {limit} ROWS ONLY
+    WHERE ROWNUM <= {limit}
     """
+
+
