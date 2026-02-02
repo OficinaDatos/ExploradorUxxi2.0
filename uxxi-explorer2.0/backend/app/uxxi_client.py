@@ -1,5 +1,6 @@
 import os
 import requests
+from typing import List
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 
@@ -97,9 +98,11 @@ class UXXIClient:
         return r.json()
 
     @staticmethod
-    def to_rows(payload: Dict[str, Any]) -> list[dict]:
+    def to_rows(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+
         items = payload.get("items", [])
         if not items:
             return []
         rs = items[0].get("resultSet", {})
         return rs.get("items", []) or []
+
