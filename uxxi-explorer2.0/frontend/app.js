@@ -22,8 +22,7 @@ async function loadOwners() {
         const sel = $("owners");
         sel.innerHTML = "";
 
-        // ✅ El backend devuelve "propietarios"
-        const owners = data.propietarios || [];
+        const owners = data.propietarios || data.owners || [];
 
         owners.forEach(o => {
             const opt = document.createElement("option");
@@ -36,6 +35,7 @@ async function loadOwners() {
         $("errOwners").textContent = e.message;
     }
 }
+
 
 async function loadTables() {
     clearErr();
@@ -116,4 +116,5 @@ $("btnColumns").onclick = loadColumns;
 $("btnDDL").onclick = loadDDL;
 $("btnPreview").onclick = loadPreview;
 $("tableFilter").oninput = applyTableFilter;
+
 
