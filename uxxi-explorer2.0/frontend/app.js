@@ -1,120 +1,100 @@
 let API = "";
-
 const $ = (id) => document.getElementById(id);
 
 function setStatus(msg) { $("status").textContent = msg; }
-function setOut(obj) { $("output").textContent = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2); }
-function clearErr() { $("errOwners").textContent = ""; $("errTables").textContent = ""; $("errOutput").textContent = ""; }
+
+// Transforma JSON en una tabla HTML real
+function setOut(obj) {
+    const output = $("output");
+    output.innerHTML = ""; 
+
+    const rows = obj.rows || (Array.isArray(obj) ? obj : null);
+
+    if (rows && rows.length > 0) {
+        const table = document.createElement("table");
+        table.className = "data-table";
+        
+        // Encabezados
+        const headers = Object.keys(rows[0]);
+        const trH = document.createElement("tr");
+        headers.forEach(h => {
+            const th = document.createElement("th");
+            th.textContent = h;
+            trH.appendChild(th);
+        });
+        table.appendChild(trH);
+
+        // Filas
+        rows.forEach(row => {
+            const tr = document.createElement("tr");
+            headers.forEach(h => {
+                const td = document.createElement("td");
+                td.textContent = row[h];
+                tr.appendChild(td);
+            });
+            table.appendChild(tr);
+        });
+        output.appendChild(table);
+    } else {
+        output.textContent = JSON.stringify(obj, null, 2);
+    }
+}
 
 async function apiGet(path) {
     const res = await fetch(`${API}${path}`);
-    const txt = await res.text();
-    let json = null;
-    try { json = JSON.parse(txt); } catch { }
-    if (!res.ok) throw new Error((json && json.detail) ? json.detail : txt);
-    return json ?? txt;
+    if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Error en la petición");
+    }
+    return await res.json();
 }
 
 async function loadOwners() {
-    clearErr();
     try {
         const data = await apiGet(`/meta/owners`);
         const sel = $("owners");
         sel.innerHTML = "";
-
-        const owners = data.propietarios || data.owners || [];
-
-        owners.forEach(o => {
+        data.owners.forEach(o => {
             const opt = document.createElement("option");
             opt.value = o; opt.textContent = o;
             sel.appendChild(opt);
         });
-
-        setStatus(`Owners cargados: ${owners.length}`);
-    } catch (e) {
-        $("errOwners").textContent = e.message;
-    }
+        setStatus(`Owners cargados: ${data.owners.length}`);
+    } catch (e) { setStatus("Error al cargar owners"); }
 }
 
-
 async function loadTables() {
-    clearErr();
     const owner = $("owners").value;
     try {
         const data = await apiGet(`/meta/tables?owner=${encodeURIComponent(owner)}`);
         const sel = $("tables");
         sel.innerHTML = "";
-        (data.tables || []).forEach(t => {
+        data.tables.forEach(t => {
             const opt = document.createElement("option");
             opt.value = t; opt.textContent = t;
             sel.appendChild(opt);
         });
-        setStatus(`Tablas en ${owner}: ${data.tables.length}`);
-    } catch (e) {
-        $("errTables").textContent = e.message;
-    }
-}
-
-function applyTableFilter() {
-    const q = $("tableFilter").value.toLowerCase();
-    const sel = $("tables");
-    [...sel.options].forEach(opt => {
-        opt.hidden = q && !opt.value.toLowerCase().includes(q);
-    });
-}
-
-async function loadColumns() {
-    clearErr();
-    const owner = $("owners").value;
-    const table = $("tables").value;
-    try {
-        const data = await apiGet(`/meta/columns?owner=${encodeURIComponent(owner)}&table=${encodeURIComponent(table)}`);
-        setOut(data);
-    } catch (e) {
-        $("errOutput").textContent = e.message;
-    }
-}
-
-async function loadDDL() {
-    clearErr();
-    const owner = $("owners").value;
-    const table = $("tables").value;
-    try {
-        const data = await apiGet(`/meta/ddl?owner=${encodeURIComponent(owner)}&table=${encodeURIComponent(table)}`);
-        setOut(data.ddl || "(sin ddl / sin permisos DBMS_METADATA)");
-    } catch (e) {
-        $("errOutput").textContent = e.message;
-    }
+        setStatus(`Tablas/Vistas en ${owner}: ${data.tables.length}`);
+    } catch (e) { setStatus("Error al cargar tablas"); }
 }
 
 async function loadPreview() {
-    clearErr();
     const owner = $("owners").value;
     const table = $("tables").value;
+    setStatus("Cargando datos...");
     try {
         const data = await apiGet(`/data/preview?owner=${encodeURIComponent(owner)}&table=${encodeURIComponent(table)}&limit=50`);
         setOut(data);
-    } catch (e) {
-        $("errOutput").textContent = e.message;
-    }
+        setStatus("Datos cargados ✅");
+    } catch (e) { setStatus("Error al cargar datos"); }
 }
 
 $("btnConnect").onclick = async () => {
     API = $("apiBase").value.trim().replace(/\/$/, "");
-    if (!API) { setStatus("Ingresá la URL del backend."); return; }
-    try {
-        await apiGet(`/health`);
-        setStatus("Conectado ✅");
-        await loadOwners();
-    } catch (e) {
-        setStatus(`No conecta: ${e.message}`);
-    }
+    await loadOwners();
 };
 
 $("btnLoadTables").onclick = loadTables;
-$("btnColumns").onclick = loadColumns;
-$("btnDDL").onclick = loadDDL;
 $("btnPreview").onclick = loadPreview;
-$("tableFilter").oninput = applyTableFilter;
 
 
