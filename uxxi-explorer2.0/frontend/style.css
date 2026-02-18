@@ -69,4 +69,26 @@ pre {
     border-radius: 12px;
     overflow: auto;
     min-height: 320px;
+
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    background: #121a33;
+}
+.data-table th {
+    background: #1a254a;
+    padding: 12px;
+    text-align: left;
+    position: sticky;
+    top: 0;
+}
+.data-table td {
+    padding: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.data-table tr:hover {
+    background: rgba(255,255,255,0.08);
 }
